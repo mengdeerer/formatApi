@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QInputDialog,
     QListWidgetItem,
-    QSplitter,
 )
 from PyQt6.QtCore import Qt
 import json
@@ -33,26 +32,22 @@ class TemplateManagerDialog(QDialog):
     def setup_ui(self):
         """设置UI"""
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(15)
+        layout.setContentsMargins(25, 25, 25, 25)
 
-        # 标题
-        title = QLabel("模板管理")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; padding: 10px;")
-        layout.addWidget(title)
-
-        # 主分割器
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+        # 核心内容区 (水平布局替代分割器，固定比例)
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(20)
 
         # 左侧：模板列表
         left_widget = self.create_template_list_panel()
-        splitter.addWidget(left_widget)
+        content_layout.addWidget(left_widget, 1)  # 权重 1
 
         # 右侧：模板内容预览
         right_widget = self.create_template_preview_panel()
-        splitter.addWidget(right_widget)
+        content_layout.addWidget(right_widget, 2)  # 权重 2
 
-        splitter.setSizes([300, 600])
-        layout.addWidget(splitter)
+        layout.addLayout(content_layout)
 
         # 底部按钮
         btn_layout = QHBoxLayout()
@@ -84,10 +79,21 @@ class TemplateManagerDialog(QDialog):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # 标题
+        # 标题与新建按钮
+        title_layout = QHBoxLayout()
         label = QLabel("可用模板")
-        label.setStyleSheet("font-weight: bold; padding: 5px;")
-        layout.addWidget(label)
+        label.setStyleSheet("font-weight: bold;")
+        title_layout.addWidget(label)
+
+        title_layout.addStretch()
+
+        self.add_btn = QPushButton("＋ 新建")
+        self.add_btn.setFixedWidth(70)
+        self.add_btn.setStyleSheet("padding: 5px; font-size: 12px; border-radius: 6px;")
+        self.add_btn.clicked.connect(self.new_template_draft)
+        title_layout.addWidget(self.add_btn)
+
+        layout.addLayout(title_layout)
 
         # 模板列表
         self.template_list = QListWidget()
@@ -132,6 +138,15 @@ class TemplateManagerDialog(QDialog):
             item.setData(Qt.ItemDataRole.UserRole, template_id)
             self.template_list.addItem(item)
 
+    def new_template_draft(self):
+        """进入新建模板草稿状态"""
+        self.template_list.clearSelection()
+        self.template_content.clear()
+        self.template_content.setPlaceholderText("在此处粘贴您的模板 JSON 或文本内容...")
+        self.selected_template_id = None
+        self.delete_btn.setEnabled(False)
+        self.template_content.setFocus()
+
     def on_template_selected(self, item: QListWidgetItem):
         """选中模板时"""
         template_id = item.data(Qt.ItemDataRole.UserRole)
@@ -156,7 +171,7 @@ class TemplateManagerDialog(QDialog):
         content = self.template_content.toPlainText().strip()
 
         if not content:
-            QMessageBox.warning(self, "提示", "请先导入或编辑模板内容")
+            QMessageBox.warning(self, "⚠️ 提示", "请先导入或编辑模板内容")
             return
 
         # 尝试验证 JSON 格式（可选，仅用于美化预览）
@@ -177,7 +192,7 @@ class TemplateManagerDialog(QDialog):
             success = self.template_manager.save_user_template(name, template_data, description)
 
             if success:
-                QMessageBox.information(self, "成功", f"模板 '{name}' 已保存")
+                QMessageBox.information(self, "✅ 成功", f"模板 '{name}' 已保存")
                 self.load_template_list()
                 self.template_content.clear()
             else:

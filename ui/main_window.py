@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QListWidgetItem,
     QApplication,
+    QLineEdit,
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
@@ -64,7 +65,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AI API 配置格式化工具")
+        self.setWindowTitle("formatApi")
 
         # 设置窗口图标
         icon_path = Path(__file__).parent.parent / "assets" / "icon.png"
@@ -116,15 +117,28 @@ class MainWindow(QMainWindow):
         """创建主操作面板"""
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
 
-        # 标题
+        # 标题 (使用图标替换文字)
         title_layout = QHBoxLayout()
-        title = QLabel("AI API 配置格式化工具")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #0d7377; padding: 10px;")
-        title_layout.addWidget(title)
+        logo_label = QLabel()
+        icon_path = Path(__file__).parent.parent / "assets" / "icon.png"
+        if icon_path.exists():
+            from PyQt6.QtGui import QPixmap
 
+            pixmap = QPixmap(str(icon_path))
+            # 缩放到合适大小，如高度 60px
+            logo_label.setPixmap(
+                pixmap.scaledToHeight(60, Qt.TransformationMode.SmoothTransformation)
+            )
+        else:
+            logo_label.setText("formatApi")
+            logo_label.setStyleSheet(
+                "font-size: 24px; font-weight: bold; color: #D0BCFF; padding: 10px;"
+            )
+
+        title_layout.addWidget(logo_label)
         title_layout.addStretch()
 
         # 快捷设置按钮
@@ -246,23 +260,23 @@ class MainWindow(QMainWindow):
         """创建历史记录面板"""
         widget = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(10)
-        layout.setContentsMargins(15, 20, 15, 20)
+        layout.setSpacing(12)
+        layout.setContentsMargins(20, 30, 20, 30)
 
         # 标题
         title = QLabel("📚 历史记录")
         title.setStyleSheet("font-size: 18px; font-weight: bold; padding: 5px;")
         layout.addWidget(title)
 
-        # 搜索框
-        self.history_search = QTextEdit()
-        self.history_search.setPlaceholderText("🔍 搜索...")
-        self.history_search.setMaximumHeight(35)
+        # 搜索框 (使用 QLineEdit 替代 QTextEdit 以消除滚动条)
+        self.history_search = QLineEdit()
+        self.history_search.setPlaceholderText("🔍 搜索历史记录...")
         self.history_search.textChanged.connect(self.search_history)
         layout.addWidget(self.history_search)
 
         # 历史列表
         self.history_list = QListWidget()
+        self.history_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.history_list.itemClicked.connect(self.load_history_item)
         layout.addWidget(self.history_list)
 
@@ -319,9 +333,15 @@ class MainWindow(QMainWindow):
         self.load_images(file_paths)
 
     def load_images(self, file_paths: list):
-        """加载多张图片并更新 UI"""
-        self.current_image_paths = file_paths
-        self.image_label.set_file_info(len(file_paths))
+        """加载多张图片（追加模式）并更新 UI"""
+        # 使用 set 去重后合并到当前列表
+        existing_paths = set(self.current_image_paths)
+        for path in file_paths:
+            if path not in existing_paths:
+                self.current_image_paths.append(path)
+                existing_paths.add(path)
+
+        self.image_label.set_file_info(len(self.current_image_paths))
 
     def process(self):
         """处理逻辑"""
@@ -329,7 +349,7 @@ class MainWindow(QMainWindow):
         text = self.text_input.toPlainText().strip()
 
         if not text:
-            QMessageBox.warning(self, "提示", "请输入包含URL和API Key的文本")
+            QMessageBox.warning(self, "⚠️ 提示", "请输入包含 URL 和 API Key 的文本")
             return
 
         parser = TextParser()
@@ -353,7 +373,7 @@ class MainWindow(QMainWindow):
 
         # 验证必要字段
         if not self.parsed_data.get("base_url"):
-            QMessageBox.warning(self, "提示", "未能识别到有效的URL，请检查输入")
+            QMessageBox.warning(self, "⚠️ 提示", "未能识别到有效的 URL，请检查输入")
             return
 
         if not self.parsed_data.get("api_key"):
@@ -452,7 +472,7 @@ class MainWindow(QMainWindow):
         if save_to_history:
             self.history_service.add(self.parsed_data)
             self.load_history_list()
-            QMessageBox.information(self, "成功", "✅ 配置已格式化完成！")
+            QMessageBox.information(self, "✅ 成功", "配置已格式化完成！")
 
     def copy_result(self):
         """复制结果到剪贴板"""
@@ -505,7 +525,7 @@ class MainWindow(QMainWindow):
 
     def search_history(self):
         """搜索历史"""
-        keyword = self.history_search.toPlainText().strip()
+        keyword = self.history_search.text().strip()
 
         self.history_list.clear()
         records = self.history_service.search(keyword)
@@ -526,9 +546,9 @@ class MainWindow(QMainWindow):
         """加载历史记录项"""
         record = item.data(Qt.ItemDataRole.UserRole)
 
-        # 填充到输入框
-        text = f"{record.get('base_url', '')}\n{record.get('api_key', '')}"
-        self.text_input.setText(text)
+        # 仅更新解析数据和模型信息，不修改输入框
+        self.current_models = record.get("models", [])
+        self.parsed_data = record
 
         # 设置模型
         self.current_models = record.get("models", [])

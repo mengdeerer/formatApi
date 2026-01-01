@@ -1,5 +1,4 @@
-"""
-AI API 配置格式化工具
+"""formatApi - 程序入口
 
 功能：
 1. 智能解析文本中的URL和API Key
@@ -9,6 +8,15 @@ AI API 配置格式化工具
 """
 
 import sys
+import os
+from pathlib import Path
+
+# 抑制 macOS 特有的 TSMSendMessageToUIServer 错误消息（通常为系统环境性误报警）
+if sys.platform == "darwin":
+    os.environ["QT_MAC_WANTS_LAYER"] = "1"
+    # 同时抑制部分已知的字体/底层通信警告输出到终端
+    os.environ["QT_LOGGING_RULES"] = "qt.qpa.fonts=false;qt.qpa.input.methods=false"
+
 from PyQt6.QtWidgets import QApplication
 from ui.main_window import MainWindow
 
@@ -26,7 +34,7 @@ def main():
         app.setWindowIcon(QIcon(str(icon_path)))
 
     # 设置应用信息
-    app.setApplicationName("AI API 配置格式化工具")
+    app.setApplicationName("formatApi")
     app.setOrganizationName("FormatAPI")
 
     # 创建主窗口

@@ -20,7 +20,7 @@ def build_app():
     os.chdir(project_root)
 
     # PyInstaller 配置
-    app_name = "AI配置格式化工具"
+    app_name = "FormatApi"
     main_script = "main.py"
 
     # 构建命令
@@ -29,9 +29,10 @@ def build_app():
         "--name",
         app_name,
         "--windowed",  # macOS GUI 应用（不显示终端）
-        "--onefile",  # 打包为单个可执行文件
+        # "--onefile",  # macOS .app 模式下不建议使用 onefile，会导致双图标和启动缓慢
+        "--noconfirm",  # 覆盖现有构建而不询问
         "--icon",
-        "assets/icon.icns",  # 应用图标（如果有）
+        "/Users/meng/tools/formatApi/assets/icon.icns",  # 应用图标（如果有）
         # 添加数据文件
         "--add-data",
         "ui/styles.qss:ui",
@@ -57,8 +58,10 @@ def build_app():
     icon_path = project_root / "assets" / "icon.icns"
     if not icon_path.exists():
         print("⚠️  图标文件不存在，将使用默认图标")
-        cmd.remove("--icon")
-        cmd.remove("assets/icon.icns")
+        if "--icon" in cmd:
+            cmd.remove("--icon")
+        if "assets/icon.icns" in cmd:
+            cmd.remove("assets/icon.icns")
 
     try:
         # 执行打包命令

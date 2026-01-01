@@ -1,4 +1,4 @@
-# AI API 配置格式化工具
+# formatApi
 
 一个基于 PyQt6 的现代化桌面应用，旨在为您快速解析并格式化 AI API 配置。
 

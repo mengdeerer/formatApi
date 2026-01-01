@@ -1,7 +1,7 @@
 [project]
 name = "formatapi"
 version = "0.1.0"
-description = "AI API 配置格式化工具 - 智能解析和格式化AI服务配置"
+description = "formatApi - 智能解析和格式化AI服务配置"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
