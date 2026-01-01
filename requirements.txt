@@ -1,0 +1,23 @@
+# GUI框架
+PyQt6==6.6.1
+
+# macOS系统OCR (可选)
+pyobjc-framework-Vision==10.1
+pyobjc-framework-Quartz==10.1
+
+# AI模型调用
+openai==1.10.0
+
+# 图片处理
+Pillow==10.2.0
+
+# 格式化输出
+PyYAML==6.0.1
+toml==0.10.2
+
+# 数据验证
+pydantic==2.5.3
+
+# 工具库
+pyperclip==1.8.2
+requests==2.31.0

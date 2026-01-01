@@ -1,0 +1,40 @@
+"""
+AI API 配置格式化工具
+
+功能：
+1. 智能解析文本中的URL和API Key
+2. 支持系统OCR和AI模型双模式识别图片中的模型列表
+3. 多格式输出（.env, JSON, YAML, TOML）
+4. 历史记录管理
+"""
+
+import sys
+from PyQt6.QtWidgets import QApplication
+from ui.main_window import MainWindow
+
+
+def main():
+    """主函数"""
+    app = QApplication(sys.argv)
+
+    # 设置应用图标
+    from PyQt6.QtGui import QIcon
+    from pathlib import Path
+
+    icon_path = Path(__file__).parent / "assets" / "icon.png"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
+
+    # 设置应用信息
+    app.setApplicationName("AI API 配置格式化工具")
+    app.setOrganizationName("FormatAPI")
+
+    # 创建主窗口
+    window = MainWindow()
+    window.show()
+
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
